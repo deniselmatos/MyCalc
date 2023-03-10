@@ -41,24 +41,5 @@ buttons.forEach((btn) => {
 
         }
 
-        // Quando o evento for um botão
-        if (btn.id.match('erase')) {
-            realTimeScreenValue.pop();
-            currentInput.innerHTML = realTimeScreenValue.join('');
-            answerScreen.innerHTML = eval(realTimeScreenValue.join(''));
-        }
-
-        // Ao clicar em igual
-        if (btn.id.match('evaluate')) {
-            currentInput.className = 'answerScreen';
-            answerScreen.className = 'currentInput';
-            answerScreen.style.color = "white";
-        }
-
-        // Previnir erro de undefined
-        if (typeof eval(realTimeScreenValue.join('')) == 'undefined') {
-            answerScreen.innerHTML = 0
-        }
-
     })
 })
