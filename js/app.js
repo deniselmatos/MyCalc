@@ -1,4 +1,3 @@
-// Variáveis
 let currentInput = document.querySelector('.currentInput');
 let answerScreen = document.querySelector('.answerScreen');
 let buttons = document.querySelectorAll('button');
@@ -7,39 +6,137 @@ let clearbtn = document.querySelector('#clear');
 let evaluate = document.querySelector('#evaluate');
 
 
+let realTimeScreenValue = [];
 
-// Visor da calculadora
-let realTimeScreenValue = []
+const calculate = (expression) => {
+    let numbers = [];
+    let operators = [];
+    let currentNum = '';
 
-// Limpar
-clearbtn.addEventListener("click", () => {
+    const precedence = (op) => {
+        if (op === '+' || op === '-') return 1;
+        if (op === '*' || op === '/' ) return 2;
+        return 0;
+    };
 
-    realTimeScreenValue = [''];
-    answerScreen.innerHTML = 0;
-    currentInput.className = 'currentInput'
-    answerScreen.className = 'answerScreen';
-    answerScreen.style.color = " rgba(150, 150, 150, 0.87)";
-})
+    const applyOperator = () => {
+        let b = numbers.pop();
+        let a = numbers.pop();
+        let operator = operators.pop();
 
-// Função anexada a todos os botões
-buttons.forEach((btn) => {
+        if (a === undefined || b === undefined) return;
 
+        switch (operator) {
+            case '+':
+                numbers.push(a + b);
+                break;
+            case '-':
+                numbers.push(a - b);
+                break;
+            case '*':
+                numbers.push(a * b);
+                break;
+            case '/':
+                if (b === 0) {
+                    numbers = ["Error"];
+                    return;
+                }
+                numbers.push(a / b);
+                break;
+            default:
+                break;
+        }
+    };
 
-    btn.addEventListener("click", () => {
-        // Se o botão clicado não é o botão de apagar
-        if (!btn.id.match('erase')) {
-            // Mostrar o valor do botão pressionado
-            realTimeScreenValue.push(btn.value)
-            currentInput.innerHTML = realTimeScreenValue.join('');
+    for (let i = 0; i < expression.length; i++) {
+        let char = expression[i];
 
-            // Executar e mostrar a resposta em tempo real
-            if (btn.classList.contains('num_btn')) {
+        if (/\d/.test(char) || char === '.') {
+            currentNum += char;
+        } 
+        else if (['+', '-', '*', '/', '%'].includes(char)) {
+            if (currentNum) {
+                let num = parseFloat(currentNum);
 
-                answerScreen.innerHTML = eval(realTimeScreenValue.join(''));
+                if (char === '%') {
+                    let lastOp = operators[operators.length - 1];
 
+                    if (lastOp === '+' || lastOp === '-') {
+                        num = (numbers[numbers.length - 1] * num) / 100;
+                    } else if (lastOp === '*' || lastOp === '/') {
+                        num = num / 100;
+                    } else {
+                        num = num / 100; 
+                    }
+
+                    numbers.push(num);
+                    currentNum = '';
+                    continue; 
+                }
+
+                numbers.push(num);
+                currentNum = '';
             }
 
-        }
+            while (
+                operators.length > 0 &&
+                precedence(operators[operators.length - 1]) >= precedence(char)
+            ) {
+                applyOperator();
+            }
 
-    })
-})
+            operators.push(char);
+        }
+    }
+
+    if (currentNum) {
+        numbers.push(parseFloat(currentNum));
+    }
+
+    while (operators.length > 0) {
+        applyOperator();
+    }
+
+    return numbers[0];
+};
+
+const precedence = (op) => {
+    if (op === '+' || op === '-') return 1;
+    if (op === '*' || op === '/') return 2;
+    return 0;
+};
+
+
+clearbtn.addEventListener("click", () => {
+    realTimeScreenValue = [];
+    currentInput.innerHTML = '';
+    answerScreen.innerHTML = '0';
+});
+
+
+erasebtn.addEventListener("click", () => {
+    realTimeScreenValue.pop();
+    currentInput.innerHTML = realTimeScreenValue.join('');
+    
+    if (realTimeScreenValue.length > 0) {
+        answerScreen.innerHTML = calculate(realTimeScreenValue.join(''));
+    } else {
+        answerScreen.innerHTML = '0';
+    }
+});
+
+buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+        if (btn.id !== 'erase' && btn.id !== 'evaluate') {
+            realTimeScreenValue.push(btn.value); 
+            currentInput.innerHTML = realTimeScreenValue.join(''); 
+            answerScreen.innerHTML = calculate(realTimeScreenValue.join(''));
+        }
+    });
+});
+
+evaluate.addEventListener("click", () => {
+    let expression = realTimeScreenValue.join(''); 
+    let result = calculate(expression); 
+    answerScreen.innerHTML = result; 
+});
